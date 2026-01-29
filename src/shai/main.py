@@ -192,6 +192,7 @@ def main():
             system_prompt=(
                 f"You are a professional shell command generation assistant. Based on the user's description, generate accurate shell commands."
                 f"Also provide brief command explanations and evaluate the risk level."
+                f"Risk levels (low risk: 'safe', harmless commands), 'caution' (medium risk, may have side effects), or 'danger' (high risk, potentially harmful)."
                 f"Ensure commands are compatible with the current system environment.\n\n"
                 f"Current system environment information:\n{get_system_info()}"
             ),

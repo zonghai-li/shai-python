@@ -51,8 +51,8 @@ class ConfigManager:
             cls.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
             try:
                 # 使用 importlib.resources 从包内读取模版
-                # 假设模版在 shai 包下
-                template_data = pkg_resources.read_text("shai", "config.template.yaml")
+                # 假设模版在 shai_python 包下
+                template_data = pkg_resources.read_text("shai_python", "config.template.yaml")
                 with open(cls.CONFIG_FILE, "w", encoding="utf-8") as f:
                     f.write(template_data)
                 return True  # 表示是第一次初始化

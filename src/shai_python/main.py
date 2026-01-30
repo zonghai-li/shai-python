@@ -9,59 +9,43 @@ import platform
 import re
 import subprocess
 import sys
-import threading
-import time
 
 from pydantic_ai.agent import Agent
+from pydantic_ai.models.anthropic import AnthropicModel
+from pydantic_ai.models.google import GoogleModel
 from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.models.openrouter import OpenRouterModel
+from pydantic_ai.models.xai import XaiModel
+from pydantic_ai.providers.anthropic import AnthropicProvider
+from pydantic_ai.providers.deepseek import DeepSeekProvider
+from pydantic_ai.providers.google import GoogleProvider
 from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.providers.openrouter import OpenRouterProvider
+from pydantic_ai.providers.xai import XaiProvider
+from yaspin import yaspin
 
-from .config import GREEN, RED, RESET, YELLOW, ConfigManager, ShellCommand
+from .config import (
+    GREEN,
+    RED,
+    RESET,
+    YELLOW,
+    ConfigManager,
+    ModelConfig,
+    ProviderConfig,
+    ShellCommand,
+)
+from .i18n import _
 
-
-def loading_animation(stop_event: threading.Event, message: str = "Generating command..."):
-    """Show a loading animation with the given message"""
-    chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
-    idx = 0
-    print(f"{message}", end="", flush=True)
-    while not stop_event.is_set():
-        print(f"\r{chars[idx % len(chars)]} {message}", end="", flush=True)
-        idx += 1
-        time.sleep(0.1)
-    # Clear the animation line
-    print("\r" + " " * 50 + "\r", end="", flush=True)
-
-
-def run_with_animation(func, *args, message: str = "Thinking", **kwargs):
-    """Run a function with a loading animation"""
-    stop_event = threading.Event()
-    animation_thread = threading.Thread(target=loading_animation, args=(stop_event, message))
-    animation_thread.start()
-    
-    try:
-        result = func(*args, **kwargs)
-        stop_event.set()
-        animation_thread.join()
-        return result
-    except Exception as e:
-        stop_event.set()
-        animation_thread.join()
-        raise e
-
-
-def get_color_for_danger(danger_level: str) -> str:
-    """Get color code based on danger level category"""
-    if danger_level.lower() == "safe":
-        return GREEN
-    elif danger_level.lower() == "caution":
-        return YELLOW
-    else:
-        return RED
+risk_color = {
+    "safe": GREEN,
+    "caution": YELLOW,
+    "danger": RED,
+}
 
 
 def format_danger_level(danger_level: str) -> str:
     """Format danger level with color"""
-    color = get_color_for_danger(danger_level)
+    color = risk_color.get(danger_level.lower(), RESET)
     return f"{color}{danger_level.upper()}{RESET}"
 
 
@@ -92,12 +76,10 @@ def execute_shell_command(command: str):
 
     for pattern in dangerous_patterns:
         if re.search(pattern, command):
-            print(f"Dangerous command pattern detected: {command}")
-            confirm = input(
-                "Are you sure you want to execute this dangerous command? (YES/no): "
-            )
+            print(_("dangerous_pattern_detected", command=command))
+            confirm = input(_("confirm_dangerous_command"))
             if confirm != "YES":
-                print("Dangerous command cancelled.")
+                print(_("dangerous_command_cancelled"))
                 return
 
     try:
@@ -109,16 +91,15 @@ def execute_shell_command(command: str):
         )
 
     except subprocess.CalledProcessError as e:
-        print(f"Command execution failed, exit code: {e.returncode}")
+        print(_("command_execution_failed", exit_code=e.returncode))
         if e.stderr.strip():
-            print("Error message:", e.stderr)
-
+            print(_("error_message"), e.stderr)
 
 
 def display_shell_command(shell_cmd: ShellCommand):
     """Show shell command with color"""
     # Get color for command based on danger level
-    command_color = get_color_for_danger(shell_cmd.risk)
+    command_color = risk_color.get(shell_cmd.risk.lower(), RESET)
 
     print(f"\ncmd>> {command_color}{shell_cmd.command}{RESET}")
     print(f"{shell_cmd.explanation}")
@@ -126,23 +107,41 @@ def display_shell_command(shell_cmd: ShellCommand):
     # Decide whether to execute command based on danger level
     if shell_cmd.risk.lower() == "danger":
         response = (
-            input(
-                f"\nThis command has a risk level of {format_danger_level(shell_cmd.risk)}, still execute? (YES/no): "
-            )
+            input(_("risk_level_prompt", risk_level=format_danger_level(shell_cmd.risk)))
             .strip()
             .lower()
         )
         if response != "yes":
-            print("Command not executed.")
+            print(_("command_not_executed"))
             return
     else:
-        response = input(f"\n[{format_danger_level(shell_cmd.risk)}]Execute this command? (y/N): ").strip().lower()
+        response = input(_("execute_prompt", risk_level=format_danger_level(shell_cmd.risk))).strip().lower()
 
     if response in ["y", "yes"]:
         execute_shell_command(shell_cmd.command)
     else:
-        print("Command not executed.")
+        print(_("command_not_executed"))
 
+
+def create_model(model_entry: ModelConfig, provider_info: ProviderConfig):
+    """Create model based on provider"""
+    if model_entry.provider == "deepseek":
+        model = OpenAIChatModel(model_name=model_entry.id, provider=DeepSeekProvider(api_key=provider_info.api_key))
+    elif model_entry.provider == "google":
+        model = GoogleModel(model_name=model_entry.id, provider=GoogleProvider(api_key=provider_info.api_key))
+    elif model_entry.provider == "anthropic":
+        model = AnthropicModel(model_name=model_entry.id, provider=AnthropicProvider(api_key=provider_info.api_key))
+    elif model_entry.provider == "xai":
+        model = XaiModel(model_name=model_entry.id, provider=XaiProvider(api_key=provider_info.api_key))
+    elif model_entry.provider == "openrouter":
+        model = OpenRouterModel(model_name=model_entry.id, provider=OpenRouterProvider(api_key=provider_info.api_key))
+    else:
+        provider = OpenAIProvider(
+            base_url=provider_info.base_url,
+            api_key=provider_info.api_key
+        )
+        model = OpenAIChatModel(model_name=model_entry.id, provider=provider)
+    return model
 
 def main():
     """Main function"""
@@ -153,7 +152,6 @@ def main():
         return
 
     # Get user prompt from command line arguments or interactive input
-
     user_prompt = " ".join(sys.argv[1:])
     while not user_prompt:
         user_prompt = input(">> ").strip()
@@ -169,21 +167,16 @@ def main():
         target_name = config.default_model
         model_entry = next((m for m in config.models if m.id == target_name or m.alias == target_name), None)
         if not model_entry:
-            raise ValueError(f"找不到模型: '{target_name}'")
+            raise ValueError(_("model_not_found", model_name=target_name))
 
         provider_info = config.providers.get(model_entry.provider)
         if not provider_info:
-            raise ValueError(f"未配置Provider: '{model_entry.provider}'")
+            raise ValueError(_("provider_not_configured", provider_name=model_entry.provider))
 
         if provider_info.api_key.startswith("$"):
-            raise ValueError(f"未定义环境变量: {provider_info.api_key}")
+            raise ValueError(_("env_var_not_defined", var_name=provider_info.api_key))
 
-        provider = OpenAIProvider(
-            base_url=provider_info.base_url,
-            api_key=provider_info.api_key
-        )
-
-        model = OpenAIChatModel(model_name=model_entry.id, provider=provider)
+        model = create_model(model_entry, provider_info)
 
          # Create Agent
         agent = Agent(
@@ -192,32 +185,26 @@ def main():
             system_prompt=(
                 f"You are a professional shell command generation assistant. Based on the user's description, generate accurate shell commands."
                 f"Also provide brief command explanations and evaluate the risk level."
-                f"Risk levels (low risk: 'safe', harmless commands), 'caution' (medium risk, may have side effects), or 'danger' (high risk, potentially harmful)."
+                f"Risk levels ('safe', harmless commands), 'caution' (may have side effects), or 'danger' (potentially harmful)."
                 f"Ensure commands are compatible with the current system environment.\n\n"
                 f"Current system environment information:\n{get_system_info()}"
             ),
         )
 
     except Exception as e:
-        print(f"{RED}配置解析失败: {e}{RESET}")
+        print(f"{RED}{_('config_init_error', error=e)}{RESET}")
         edit_command = ConfigManager.get_edit_command()
         display_shell_command(edit_command)
         return
 
-    try:
-        # Run the agent to get results with animation
-        result = run_with_animation(
-            agent.run_sync,
-            user_prompt,
-            message="Thinking..."
-        )
+    with yaspin(text=_("thinking"), color="yellow") as spinner:
+        try:
+            result = agent.run_sync(user_prompt)
+        except Exception as e:
+            spinner.fail(_("erorr", error=e))
+            exit(1)
 
-        display_shell_command(result.output)
-
-    except Exception as e:
-        print(f"Error: {e}")
-        exit(1)
-
+    display_shell_command(result.output)
 
 if __name__ == "__main__":
     main()

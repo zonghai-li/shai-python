@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
 """
 Command line tool that generates shell commands based on user input prompts and optionally executes them.
-Using DeepSeek model version
 """
 
 import os
@@ -174,6 +172,8 @@ def create_model(model_entry: ModelConfig, provider_info: ProviderConfig):
 
 def main():
     """Main function"""
+    system_info = get_system_info()
+
     is_init = ConfigManager.ensure_config()
     if is_init:
         edit_command = ConfigManager.get_edit_command()
@@ -185,7 +185,7 @@ def main():
     while not user_prompt:
         user_prompt = input(">> ").strip()
 
-    if user_prompt.lower() == "config":
+    if user_prompt.lower() in ("config", "configure", "cfg", "confg", "comfig"):
         edit_command = ConfigManager.get_edit_command()
         display_shell_command(edit_command)
         return
@@ -206,9 +206,6 @@ def main():
             raise ValueError(_("env_var_not_defined", var_name=provider_info.api_key))
 
         model = create_model(model_entry, provider_info)
-
-        system_info = get_system_info()
-        # print(system_info)
 
          # Create Agent
         agent = Agent(

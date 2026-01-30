@@ -1,10 +1,11 @@
 [project]
 name = "shai-python"
-version = "0.1.6"
+version = "0.1.7"
 description = "AI-powered shell command generator using LLM models"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
+homepage = "https://github.com/zonghai-li/shai-python"
 authors = [
     {name = "zonghai", email = "zonghai@gmail.com"}
 ]

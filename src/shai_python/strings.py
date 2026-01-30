@@ -15,28 +15,42 @@ class Translator:
         self.translations = self.load_translations()
 
     def detect_language(self) -> str:
-        """Detect system language preference"""
-        # Check environment variables first
-        lang_env = os.environ.get('LANG', '').lower()
-        lc_all = os.environ.get('LC_ALL', '').lower()
-        lc_messages = os.environ.get('LC_MESSAGES', '').lower()
-
-        # Check for Chinese language indicators
-        chinese_indicators = ['zh_cn', 'zh_tw', 'zh_hk', 'zh_sg', 'zh']
-
-        for env_var in [lang_env, lc_all, lc_messages]:
-            for indicator in chinese_indicators:
-                if indicator in env_var:
+        """
+        Detect system language preference using environment variables and system locale.
+        Prioritizes Chinese (zh) detection, defaults to English (en).
+        """
+        # 1. Check environment variables (highest priority for Unix/macOS/WSL)
+        # LC_ALL > LC_MESSAGES > LANG
+        env_vars = ['LC_ALL', 'LC_MESSAGES', 'LANG']
+        for var in env_vars:
+            value = os.environ.get(var, '').lower()
+            if value:
+                # Matches 'zh', 'zh_CN', 'zh-Hans', 'chinese', etc.
+                if 'zh' in value or 'chinese' in value:
                     return 'zh'
 
-        # Check system locale
+        # 2. Fallback to system-level locale settings
         try:
-            system_locale = locale.getlocale()[0]
-            if system_locale and any(indicator in system_locale.lower() for indicator in chinese_indicators):
-                return 'zh'
-        except:
+            # getdefaultlocale() is often more stable than getlocale() on Windows
+            # as it handles the "Chinese (Simplified)_China" style strings better.
+            default_loc = locale.getdefaultlocale()[0]
+            if default_loc:
+                default_loc = default_loc.lower()
+                if 'zh' in default_loc or 'chinese' in default_loc:
+                    return 'zh'
+
+            # Secondary check with the standard getlocale
+            sys_loc = locale.getlocale()[locale.LC_MESSAGES][0]
+            if sys_loc:
+                sys_loc = sys_loc.lower()
+                if 'zh' in sys_loc or 'chinese' in sys_loc:
+                    return 'zh'
+        except (ValueError, Exception):
+            # locale.getlocale() often throws ValueError on Windows 
+            # for unknown locale identifiers; we catch it to remain robust.
             pass
-        # Default to English
+
+        # 3. Default to English if no Chinese indicators are found
         return 'en'
 
     def load_translations(self) -> dict[str, dict[str, str]]:

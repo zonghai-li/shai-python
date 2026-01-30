@@ -34,7 +34,7 @@ from .config import (
     ProviderConfig,
     ShellCommand,
 )
-from .i18n import _
+from .strings import _
 
 risk_color = {
     "safe": GREEN,

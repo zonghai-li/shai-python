@@ -23,6 +23,7 @@ classifiers = [
 dependencies = [
     "pydantic-ai>=1.47.0",
     "yaspin>=3.4.0",
+    "psutil>=7.2.2",
 ]
 
 [project.scripts]

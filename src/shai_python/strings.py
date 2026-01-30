@@ -51,7 +51,6 @@ class Translator:
                 'confirm_dangerous_command': 'Are you sure you want to execute this dangerous command? (YES/no): ',
                 'dangerous_command_cancelled': 'Dangerous command cancelled.',
                 'command_execution_failed': 'Command execution failed, exit code: {exit_code}',
-                'error_message': 'Error message:',
                 # Shell command display
                 'risk_level_prompt': 'This command has a risk level of {risk_level}, still execute? (YES/no): ',
                 'execute_prompt': '[{risk_level}]Execute this command? (y/N): ',
@@ -76,7 +75,6 @@ class Translator:
                 'confirm_dangerous_command': '确定要执行这个危险命令吗？(YES/no): ',
                 'dangerous_command_cancelled': '危险命令已取消。',
                 'command_execution_failed': '命令执行失败，错误码: {exit_code}',
-                'error_message': '错误信息:',
                 # Shell command display
                 'risk_level_prompt': '此命令的风险等级为 {risk_level}，仍然执行吗？(YES/no): ',
                 'execute_prompt': '[{risk_level}]执行此命令？(y/N): ',

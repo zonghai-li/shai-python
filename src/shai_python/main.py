@@ -49,11 +49,37 @@ def format_danger_level(danger_level: str) -> str:
     return f"{color}{danger_level.upper()}{RESET}"
 
 
+def get_windows_shell_type():
+    try:
+        import psutil
+        current_process = psutil.Process(os.getpid())
+        for _ in range(5):
+            parent = current_process.parent()
+            if not parent:
+                break
+            parent_name = parent.name().lower()
+            if "python" in parent_name or "uv" in parent_name:
+                current_process = parent
+                continue
+            if "pwsh" in parent_name or "powershell" in parent_name:
+                return "PowerShell"
+            if "cmd" in parent_name:
+                return "Windows CMD"
+            if "bash" in parent_name or "zsh" in parent_name:
+                return parent_name
+            current_process = parent
+        return "Generic/Unknown"
+    except Exception:
+        return "Unknown"
+
+
 def get_system_info():
     """Get system environment information"""
     system = platform.system()  # Linux, Darwin (macOS), Windows
     release = platform.release()
-    shell = os.environ.get("SHELL", "unknown")
+    shell = os.environ.get("SHELL")
+    if "windows" == system.lower():
+        shell = get_windows_shell_type()
 
     return f"""
 Operating System: {system}
@@ -83,8 +109,13 @@ def execute_shell_command(command: str):
                 return
 
     try:
+         # Linux/Mac or Windows CMD
+        process_cmd = command
+        if platform.system() == "Windows" and get_windows_shell_type() == "PowerShell":
+            process_cmd = ["powershell", "-Command", command]
+
         subprocess.run(
-            command,
+            process_cmd,
             shell=True,
             check=True,
             text=True,
@@ -92,8 +123,6 @@ def execute_shell_command(command: str):
 
     except subprocess.CalledProcessError as e:
         print(_("command_execution_failed", exit_code=e.returncode))
-        if e.stderr.strip():
-            print(_("error_message"), e.stderr)
 
 
 def display_shell_command(shell_cmd: ShellCommand):
@@ -102,7 +131,7 @@ def display_shell_command(shell_cmd: ShellCommand):
     command_color = risk_color.get(shell_cmd.risk.lower(), RESET)
 
     print(f"\ncmd>> {command_color}{shell_cmd.command}{RESET}")
-    print(f"{shell_cmd.explanation}")
+    print(f"{shell_cmd.explanation}\n")
 
     # Decide whether to execute command based on danger level
     if shell_cmd.risk.lower() == "danger":
@@ -178,6 +207,9 @@ def main():
 
         model = create_model(model_entry, provider_info)
 
+        system_info = get_system_info()
+        # print(system_info)
+
          # Create Agent
         agent = Agent(
             model=model,
@@ -187,7 +219,7 @@ def main():
                 f"Also provide brief command explanations and evaluate the risk level."
                 f"Risk levels ('safe', harmless commands), 'caution' (may have side effects), or 'danger' (potentially harmful)."
                 f"Ensure commands are compatible with the current system environment.\n\n"
-                f"Current system environment information:\n{get_system_info()}"
+                f"Current system environment information:\n{system_info}"
             ),
         )
 

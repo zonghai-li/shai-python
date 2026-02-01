@@ -9,20 +9,10 @@ import subprocess
 import sys
 
 from pydantic_ai.agent import Agent
-from pydantic_ai.models.anthropic import AnthropicModel
-from pydantic_ai.models.google import GoogleModel
-from pydantic_ai.models.openai import OpenAIChatModel
-from pydantic_ai.models.openrouter import OpenRouterModel
-from pydantic_ai.models.xai import XaiModel
-from pydantic_ai.providers.anthropic import AnthropicProvider
-from pydantic_ai.providers.deepseek import DeepSeekProvider
-from pydantic_ai.providers.google import GoogleProvider
-from pydantic_ai.providers.openai import OpenAIProvider
-from pydantic_ai.providers.openrouter import OpenRouterProvider
-from pydantic_ai.providers.xai import XaiProvider
+from pydantic_ai.models import Model
 from yaspin import yaspin
 
-from .config import (
+from shai_python.config import (
     GREEN,
     RED,
     RESET,
@@ -32,7 +22,7 @@ from .config import (
     ProviderConfig,
     ShellCommand,
 )
-from .strings import _
+from shai_python.strings import _
 
 risk_color = {
     "safe": GREEN,
@@ -150,19 +140,31 @@ def display_shell_command(shell_cmd: ShellCommand):
         print(_("command_not_executed"))
 
 
-def create_model(model_entry: ModelConfig, provider_info: ProviderConfig):
+def create_model(model_entry: ModelConfig, provider_info: ProviderConfig) -> Model:
     """Create model based on provider"""
     if model_entry.provider == "deepseek":
+        from pydantic_ai.models.openai import OpenAIChatModel
+        from pydantic_ai.providers.deepseek import DeepSeekProvider
         model = OpenAIChatModel(model_name=model_entry.id, provider=DeepSeekProvider(api_key=provider_info.api_key))
     elif model_entry.provider == "google":
+        from pydantic_ai.models.google import GoogleModel
+        from pydantic_ai.providers.google import GoogleProvider
         model = GoogleModel(model_name=model_entry.id, provider=GoogleProvider(api_key=provider_info.api_key))
     elif model_entry.provider == "anthropic":
+        from pydantic_ai.models.anthropic import AnthropicModel
+        from pydantic_ai.providers.anthropic import AnthropicProvider
         model = AnthropicModel(model_name=model_entry.id, provider=AnthropicProvider(api_key=provider_info.api_key))
     elif model_entry.provider == "xai":
+        from pydantic_ai.models.xai import XaiModel
+        from pydantic_ai.providers.xai import XaiProvider
         model = XaiModel(model_name=model_entry.id, provider=XaiProvider(api_key=provider_info.api_key))
     elif model_entry.provider == "openrouter":
+        from pydantic_ai.models.openrouter import OpenRouterModel
+        from pydantic_ai.providers.openrouter import OpenRouterProvider
         model = OpenRouterModel(model_name=model_entry.id, provider=OpenRouterProvider(api_key=provider_info.api_key))
     else:
+        from pydantic_ai.models.openai import OpenAIChatModel
+        from pydantic_ai.providers.openai import OpenAIProvider
         provider = OpenAIProvider(
             base_url=provider_info.base_url,
             api_key=provider_info.api_key

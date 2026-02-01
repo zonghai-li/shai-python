@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, Field
 
-from .strings import _
+from shai_python.strings import _
 
 # ANSI color codes for colored output
 GREEN = "\033[92m"  # Green for safe

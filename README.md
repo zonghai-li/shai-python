@@ -14,10 +14,30 @@ Shai 是一个 Shell 命令生成工具，利用大型语言模型（LLM）根�
 - 🔒 **安全评估** - 自动评估命令风险等级（安全/警告/危险）
 - ⚙️ **灵活配置** - 支持多样模型配置
 - 🎨 **交互式界面** - 彩色输出和加载动画，提升用户体验
+- 🌍 **跨平台支持** - 完美支持 Windows (PowerShell/CMD)、Linux、macOS
 
 ### 🚀 快速开始
 
-#### 安装方法
+#### 安装 uv（如果没有安装）
+
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```bash
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**或者使用包管理器:**
+- **Homebrew (macOS):** `brew install uv`
+- **Cargo:** `cargo install uv`
+- **pip:** `pip install uv`
+
+详细安装指南: https://docs.astral.sh/uv/getting-started/installation/
+
+#### 安装 Shai
 
 ```bash
 uv tool install shai-python
@@ -111,6 +131,27 @@ models:
 - 🟡 **警告 (Caution)** - 可能有副作用，需要确认
 - 🔴 **危险 (Danger)** - 高风险命令，需要明确确认
 
+#### 系统兼容性
+
+Shai 完美支持多种操作系统和 Shell 环境：
+
+**🪟 Windows**
+- **PowerShell** - 自动检测并生成 PowerShell 语法命令
+- **CMD (命令提示符)** - 支持传统 CMD 命令
+- **Windows Terminal** - 良好的终端兼容性
+
+**🍎 macOS**
+- **Zsh** - 默认 Shell，完美支持
+- **Bash** - 兼容性好
+
+**🐧 Linux**
+- **Bash** - 主流发行版默认 Shell
+- **Zsh** - 流行的替代 Shell
+- **其他 Shell** - Fish, Dash 等
+
+**🔄 WSL (Windows Subsystem for Linux)**
+- **自动检测** - 智能识别 WSL 环境
+- **命令转换** - 根据实际环境生成合适命令
 
 ### 🐛 故障排除
 
@@ -145,10 +186,30 @@ Shai uses large language models (LLMs) to generate shell command based on natura
 - 🔒 **Safety Assessment** - Automatic risk level evaluation (Safe/Caution/Danger)
 - ⚙️ **Flexible Configuration** - Various models configuration
 - 🎨 **Interactive Interface** - Colored output and loading animations for better user experience
+- 🌍 **Cross-Platform Support** - Full support for Windows (PowerShell/CMD), Linux, macOS
 
 ### 🚀 Quick Start
 
-#### Installation
+#### Install uv (if not already installed)
+
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```bash
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Or using package managers:**
+- **Homebrew (macOS):** `brew install uv`
+- **Cargo:** `cargo install uv`
+- **pip:** `pip install uv`
+
+Detailed installation guide: https://docs.astral.sh/uv/getting-started/installation/
+
+#### Install Shai
 
 ```bash
 uv tool install shai-python
@@ -230,6 +291,28 @@ models:
 - 🟢 **Safe** - Harmless commands, can be executed directly
 - 🟡 **Caution** - Commands with potential side effects, require confirmation
 - 🔴 **Danger** - High-risk commands, require explicit confirmation
+
+#### System Compatibility
+
+Shai fully supports multiple operating systems and Shell environments:
+
+**🪟 Windows**
+- **PowerShell** - Auto-detect and generate PowerShell syntax commands
+- **CMD (Command Prompt)** - Support for traditional CMD commands
+- **Windows Terminal** - Excellent terminal compatibility
+
+**🍎 macOS**
+- **Zsh** - Default Shell, perfect support
+- **Bash** - Good compatibility
+
+**🐧 Linux**
+- **Bash** - Default Shell for mainstream distributions
+- **Zsh** - Popular alternative Shell
+- **Other Shells** - Fish, Dash, etc.
+
+**🔄 WSL (Windows Subsystem for Linux)**
+- **Auto-detection** - Smart WSL environment detection
+- **Command Conversion** - Generate appropriate commands based on actual environment
 
 ### 🐛 Troubleshooting
 
